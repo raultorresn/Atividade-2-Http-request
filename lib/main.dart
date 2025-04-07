@@ -12,9 +12,18 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.blue,
+            foregroundColor: Colors.white,
+          ),
+        ),
+      ),
       title: 'Busca de Usuários',
-      home: UserSearchPage(),
+      home: const UserSearchPage(),
     );
   }
 }
@@ -27,6 +36,7 @@ class UserSearchPage extends StatefulWidget {
 }
 
 class _UserSearchPageState extends State<UserSearchPage> {
+  bool emptyInput = false;
   final TextEditingController _controller = TextEditingController();
   String? name;
   String? email;
@@ -78,9 +88,16 @@ class _UserSearchPageState extends State<UserSearchPage> {
   void onSearch() {
     final input = _controller.text.trim();
     final id = int.tryParse(input);
+
+    setState(() {
+      emptyInput = input.isEmpty;
+    });
+
+    if (emptyInput) return;
+
     if (id == null || id < 1 || id > 12) {
       setState(() {
-        errorMessage = 'Por favor, insira um ID entre 1 e 12.';
+        errorMessage = 'Usuário não encontrado!';
         name = null;
         email = null;
         avatarUrl = null;
@@ -94,41 +111,103 @@ class _UserSearchPageState extends State<UserSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Busca de Usuários')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            TextField(
-              controller: _controller,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Digite o ID do usuário (1 a 12)',
-                border: OutlineInputBorder(),
-              ),
+      body: Stack(
+        children: [
+          SizedBox.expand(
+            child: Image.network(
+              'https://wallpapercave.com/wp/wp6506037.jpg',
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: 10),
-            ElevatedButton(
-              onPressed: onSearch,
-              child: const Text('Buscar'),
-            ),
-            const SizedBox(height: 20),
-            if (isLoading) const CircularProgressIndicator(),
-            if (errorMessage != null)
-              Text(
-                errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
-            if (name != null && email != null && avatarUrl != null)
-              Column(
+          ),
+
+          Container(
+            color: Colors.black.withOpacity(0.3),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.network(avatarUrl!),
+                  const SizedBox(height: 60),
+                  if (isLoading) const CircularProgressIndicator(),
+                  if (errorMessage != null)
+                    Text(
+                      errorMessage!,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                  if (name != null && email != null && avatarUrl != null)
+                    Column(
+                      children: [
+                        CircleAvatar(
+                          radius: 60,
+                          backgroundImage: NetworkImage(avatarUrl!),
+                        ),
+                        const SizedBox(height: 10),
+                        Text('Nome: $name', style: TextStyle(color: Colors.white, fontSize: 18)),
+                        Text('Email: $email', style: TextStyle(color: Colors.white, fontSize: 18)),
+                      ],
+                    ),
+                  const SizedBox(height: 20),
+                  Card(
+                    elevation: 8,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    color: Colors.white.withOpacity(0.9),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: Theme(
+                        data: Theme.of(context).copyWith(
+                          colorScheme: Theme.of(context).colorScheme.copyWith(
+                            primary: Colors.blue, // cor da borda e do cursor do TextField
+                          ),
+                        ),
+                        child: TextField(
+                          controller: _controller,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'Digite o ID do usuário (1 a 12)',
+                            labelStyle: TextStyle(color: Colors.grey[700]),
+                            prefixIcon: Icon(Icons.person_search),
+                            border: OutlineInputBorder(
+
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            errorText: emptyInput? 'Por favor, digite um ID antes de buscar' : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: 10),
-                  Text('Nome: $name'),
-                  Text('Email: $email'),
+                  ElevatedButton.icon(
+                    onPressed: onSearch,
+                    icon: const Icon(Icons.search),
+                    label: const Text(
+                      'Buscar',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      alignment: Alignment.center,
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.lightBlueAccent.shade400,
+                      elevation: 6,
+                      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      shadowColor: Colors.black.withOpacity(0.4),
+                    ),
+                  ),
                 ],
               ),
-          ],
-        ),
+            ),
+          ),
+        ],
       ),
     );
   }
